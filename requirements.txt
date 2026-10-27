@@ -1,0 +1,12 @@
+﻿google-genai
+python-dotenv
+sentence-transformers
+qdrant-client
+tavily-python
+biopython
+pandas
+scikit-learn
+fastapi
+uvicorn[standard]
+python-multipart
+httpx

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustCare - Clinical Decision Support System</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 12h-4l-3 9L9 3l-3 9H2'/></svg>">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">TrustCare CDSS</h1>
+          <p class="brand-subtitle">Multi-Agent Clinical Decision Support System</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-warning">Research Prototype — Not for Clinical Use</span>
+        <a href="/api/docs" target="_blank" class="nav-link">API Docs</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Critical Safety Banner -->
+    <div class="alert alert-danger" id="safety-banner">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <strong>CRITICAL SAFETY WARNING:</strong> TrustCare is an experimental AI research prototype. 
+        It is NOT a medical device, nor has it been validated for clinical decision-making. 
+        Severe or exertional chest symptoms require immediate emergency medical evaluation (e.g., call 911/emergency services).
+      </div>
+    </div>
+
+    <!-- Intake Section -->
+    <section class="card intake-card" id="intake-section">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="icon-bubble">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="card-title">Patient Clinical Case Intake</h2>
+            <p class="card-desc">Enter de-identified patient notes or structured parameters for multi-agent synthesis.</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline" id="btn-load-example">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Load Example Case
+        </button>
+      </div>
+
+      <form id="intake-form" class="intake-form">
+        <!-- Clinical Notes Area -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <label for="clinical-notes" class="form-label">Clinical Notes / Narrative <span class="required">*</span></label>
+            <span class="char-count" id="notes-char-count">0 characters</span>
+          </div>
+          <textarea 
+            id="clinical-notes" 
+            rows="6" 
+            class="form-control" 
+            placeholder="e.g. 58-year-old male presenting with exertional chest tightness radiating to the left arm, onset 3 weeks ago. History of hypertension, hyperlipidaemia. Resting BP 148/92 mmHg, cholesterol 220 mg/dL. No ECG or troponin provided."
+          ></textarea>
+          <p class="form-hint">Enter patient demographics, symptoms, onset duration, relevant medical history, and recorded vitals.</p>
+        </div>
+
+        <!-- Cleveland Cardiac Parameters Collapsible Panel -->
+        <div class="card parameters-panel" id="cardiac-parameters-panel">
+          <div class="parameters-header">
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-cardiac-params">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Cleveland Cardiac Parameters (Optional - ML Model Risk Scoring)</span>
+            </label>
+            <button type="button" class="btn-text" id="toggle-params-view" style="display: none;">
+              <span id="params-toggle-text">Collapse</span>
+            </button>
+          </div>
+
+          <div class="parameters-grid" id="parameters-grid" style="display: none;">
+            <div class="param-item">
+              <label for="param-age">Age (years)</label>
+              <input type="number" id="param-age" min="1" max="120" placeholder="e.g. 58" class="form-control">
+            </div>
+
+            <div class="param-item">
+              <label for="param-sex">Biological Sex</label>
+              <select id="param-sex" class="form-control">
+                <option value="">— Select —</option>
+                <option value="1">1 — Male</option>
+                <option value="0">0 — Female</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-cp">Chest Pain Type (CP)</label>
+              <select id="param-cp" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0 — Typical Angina</option>
+                <option value="1">1 — Atypical Angina</option>
+                <option value="2">2 — Non-anginal Pain</option>
+                <option value="3">3 — Asymptomatic</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-trestbps">Resting BP (mm Hg)</label>
+              <input type="number" id="param-trestbps" min="50" max="250" placeholder="e.g. 148" class="form-control">
+            </div>
+
+            <div class="param-item">
+              <label for="param-chol">Serum Cholesterol (mg/dL)</label>
+              <input type="number" id="param-chol" min="80" max="600" placeholder="e.g. 220" class="form-control">
+            </div>
+
+            <div class="param-item">
+              <label for="param-fbs">Fasting Blood Sugar > 120</label>
+              <select id="param-fbs" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0 — No (≤ 120 mg/dL)</option>
+                <option value="1">1 — Yes (> 120 mg/dL)</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-restecg">Resting ECG</label>
+              <select id="param-restecg" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0 — Normal</option>
+                <option value="1">1 — ST-T Wave Abnormality</option>
+                <option value="2">2 — LV Hypertrophy</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-thalach">Max Heart Rate (bpm)</label>
+              <input type="number" id="param-thalach" min="50" max="250" placeholder="e.g. 142" class="form-control">
+            </div>
+
+            <div class="param-item">
+              <label for="param-exang">Exercise Induced Angina</label>
+              <select id="param-exang" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0 — No</option>
+                <option value="1">1 — Yes</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-oldpeak">ST Depression (Oldpeak)</label>
+              <input type="number" id="param-oldpeak" step="0.1" min="0" max="10" placeholder="e.g. 2.3" class="form-control">
+            </div>
+
+            <div class="param-item">
+              <label for="param-slope">Peak Exercise ST Slope</label>
+              <select id="param-slope" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0 — Upsloping</option>
+                <option value="1">1 — Flat</option>
+                <option value="2">2 — Downsloping</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-ca">Fluoroscopy Major Vessels (0-3)</label>
+              <select id="param-ca" class="form-control">
+                <option value="">— Select —</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+
+            <div class="param-item">
+              <label for="param-thal">Thallium Scintigraphy (Thal)</label>
+              <select id="param-thal" class="form-control">
+                <option value="">— Select —</option>
+                <option value="3">3 — Normal</option>
+                <option value="6">6 — Fixed Defect</option>
+                <option value="7">7 — Reversible Defect</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Validation / Error Box -->
+        <div id="form-error" class="alert alert-danger" style="display: none;"></div>
+
+        <!-- Submit Controls -->
+        <div class="form-actions">
+          <p class="form-timing-note">Multi-agent CDSS analysis runs Clarifier, PubMed RAG, Web Scanner, BioMistral, and Cleveland Cardiac ML pipeline.</p>
+          <button type="submit" class="btn btn-primary" id="btn-submit">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Run Diagnostic Pipeline
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Pipeline Loading & Agent Progress Section -->
+    <section class="card progress-card" id="progress-section" style="display: none;">
+      <div class="progress-header">
+        <div class="spinner"></div>
+        <div>
+          <h3 class="progress-title">Running Multi-Agent CDSS Pipeline...</h3>
+          <p class="progress-desc" id="progress-desc">Executing agents sequentially and synthesizing clinical reasoning...</p>
+        </div>
+      </div>
+
+      <div class="agent-steps-grid">
+        <div class="agent-step-item" id="step-clarifier">
+          <span class="step-badge">Agent 1</span>
+          <div class="step-info">
+            <strong>Clarifier Agent</strong>
+            <p>Extracting structured patient entities</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+
+        <div class="agent-step-item" id="step-rag_analyzer">
+          <span class="step-badge">Agent 2</span>
+          <div class="step-info">
+            <strong>Symptom RAG</strong>
+            <p>Retrieving PubMed cardiology evidence</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+
+        <div class="agent-step-item" id="step-evidence_scanner">
+          <span class="step-badge">Agent 3</span>
+          <div class="step-info">
+            <strong>Web Scanner</strong>
+            <p>Validating ACC/AHA guidelines</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+
+        <div class="agent-step-item" id="step-cardiac_model">
+          <span class="step-badge">Agent 4</span>
+          <div class="step-info">
+            <strong>Cardiac ML Model</strong>
+            <p>Cleveland Logistic Regression</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+
+        <div class="agent-step-item" id="step-data_fusion">
+          <span class="step-badge">Agent 5</span>
+          <div class="step-info">
+            <strong>BioMistral Fusion</strong>
+            <p>Synthesizing biomedical reasoning</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+
+        <div class="agent-step-item" id="step-adaptive_optimizer">
+          <span class="step-badge">Agent 6</span>
+          <div class="step-info">
+            <strong>Adaptive Optimizer</strong>
+            <p>Evaluating confidence thresholds</p>
+          </div>
+          <span class="step-status">Pending</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final Diagnostic Report Section -->
+    <section class="report-section" id="report-section" style="display: none;">
+      <!-- Report Header -->
+      <div class="report-header-card">
+        <div class="report-title-row">
+          <div>
+            <h2 class="report-title">Clinical Diagnostic Report</h2>
+            <p class="report-subtitle">TrustCare Multi-Agent CDSS Synthesis • Research Prototype</p>
+          </div>
+          <div class="report-actions">
+            <button type="button" class="btn btn-outline" onclick="window.print()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              Print / Export
+            </button>
+            <button type="button" class="btn btn-primary" id="btn-new-analysis">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              New Analysis
+            </button>
+          </div>
+        </div>
+
+        <!-- Urgent Red Flags Detected -->
+        <div class="alert alert-danger" id="report-emergency-banner" style="display: none;">
+          <div class="alert-icon">🚨</div>
+          <div>
+            <strong class="alert-title">URGENT CLINICAL RED FLAGS DETECTED</strong>
+            <ul class="alert-list" id="report-emergency-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Demographics & Clarification Summary -->
+      <div class="card summary-card">
+        <h3 class="card-subtitle-header">Patient Intake & Structured Clarification</h3>
+        <div class="intake-badges-grid">
+          <div class="intake-badge-box">
+            <span class="badge-label">Age / Sex</span>
+            <strong class="badge-value" id="report-age-sex">—</strong>
+          </div>
+          <div class="intake-badge-box">
+            <span class="badge-label">Duration</span>
+            <strong class="badge-value" id="report-duration">—</strong>
+          </div>
+          <div class="intake-badge-box" style="grid-column: span 2;">
+            <span class="badge-label">Extracted Key Symptoms</span>
+            <strong class="badge-value" id="report-symptoms">—</strong>
+          </div>
+        </div>
+        <div class="raw-note-quote" id="report-raw-note"></div>
+      </div>
+
+      <!-- Block A & C: Machine Learning Risk Prediction -->
+      <div class="card ml-risk-card" id="ml-risk-card">
+        <div class="card-header">
+          <div>
+            <span class="section-tag tag-rose">Block A &amp; C</span>
+            <h3 class="card-title">Cleveland Heart Disease ML Prediction &amp; Missing Tests Audit</h3>
+          </div>
+          <span class="badge badge-lg" id="report-risk-badge">Moderate</span>
+        </div>
+
+        <div class="risk-overview-grid">
+          <div class="risk-gauge-box">
+            <div class="gauge-number" id="report-risk-percentage">0.0%</div>
+            <div class="gauge-label">Cleveland Logistic Regression Probability</div>
+            <p class="gauge-subtext">Uncalibrated experimental ML model output based on partial inputs and assumed baseline parameters, NOT a confirmed clinical diagnosis.</p>
+          </div>
+
+          <div class="missing-tests-box">
+            <h4>Missing Clinical Tests Notice</h4>
+            <p class="missing-tests-desc" id="report-missing-summary">Certain diagnostic tests were omitted from the intake and imputed via cohort medians.</p>
+            <div class="missing-tags-list" id="report-missing-tags"></div>
+          </div>
+        </div>
+
+        <!-- Transparent Parameters Table -->
+        <div class="parameters-audit-table-wrap">
+          <table class="table audit-table">
+            <thead>
+              <tr>
+                <th>Parameter Name</th>
+                <th>Category</th>
+                <th>Evaluated Value</th>
+                <th>Status / Provenance</th>
+              </tr>
+            </thead>
+            <tbody id="report-params-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Block B: Guidelines & Literature Retrieval -->
+      <div class="card fusion-card">
+        <div class="card-header">
+          <div>
+            <span class="section-tag tag-blue">Block B</span>
+            <h3 class="card-title">Fused Agent Diagnostic Summary (BioMistral + PubMed + Web)</h3>
+          </div>
+          <span class="badge badge-info" id="report-candidates-count">Candidates Identified</span>
+        </div>
+
+        <!-- BioMistral Narrative -->
+        <div class="biomistral-narrative-box">
+          <div class="narrative-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+              <path d="M9 21h6"/>
+            </svg>
+            <strong>Biomedical Reasoning Synthesis</strong>
+          </div>
+          <p class="narrative-body" id="report-biomistral-text"></p>
+        </div>
+
+        <!-- Candidate Differential Conditions -->
+        <div class="differential-section">
+          <h4>Candidate Differential Considerations</h4>
+          <div class="diagnoses-list" id="report-diagnoses-list"></div>
+        </div>
+
+        <!-- Retrieved Literature Evidence (PubMed) -->
+        <div class="evidence-section">
+          <h4>Supporting Literature Evidence (PubMed / Guidelines)</h4>
+          <div class="evidence-list" id="report-evidence-list"></div>
+        </div>
+      </div>
+
+      <!-- Agent Execution Trace Audit -->
+      <div class="card traces-card">
+        <div class="card-header">
+          <h3 class="card-title">Agent Execution Traces &amp; Latency Audit</h3>
+          <span class="badge badge-secondary" id="report-total-duration">Total Latency</span>
+        </div>
+        <div class="traces-grid" id="report-traces-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>TrustCare CDSS • Adaptive Multi-Agent Clinical Decision Support Research Prototype</p>
+      <p class="footer-sub">For research and academic benchmarking only • Not validated for diagnostic or clinical treatment</p>
+    </div>
+  </footer>
+
+  <script src="/script.js"></script>
+</body>
+</html>
